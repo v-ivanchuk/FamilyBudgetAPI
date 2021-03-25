@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 
 namespace FamilyBudgetAPI.Controllers
@@ -23,6 +24,38 @@ namespace FamilyBudgetAPI.Controllers
         public async Task<IEnumerable<Family>> Get()
         {
             return await _budgetContext.Families.ToListAsync();
+        }
+
+        [HttpGet("[action]")]
+        public async Task<IEnumerable<Family>> GetPagination([FromQuery] FamilyFilter family)
+        {
+            var familyParams = new Pagination(family.PageNumber, family.PageSize, family.OrderMode);
+
+            var filterResult =  _budgetContext.Families.Any(f => f.Id == family.Id
+                                                         || f.Name == family.Name
+                                                         || f.DateCreated == family.DateCreated
+                                                         || f.DateUpdated == family.DateUpdated);
+
+            if (filterResult)
+            {
+                return await _budgetContext.Families
+                                .Where(f => f.Id == family.Id
+                                         || f.Name == family.Name
+                                         || f.DateCreated == family.DateCreated
+                                         || f.DateUpdated == family.DateUpdated)
+                                .OrderBy(familyParams.OrderMode)
+                                .Skip((familyParams.PageNumber - 1) * familyParams.PageSize)
+                                .Take(familyParams.PageSize)
+                                .ToListAsync();
+            }
+            else
+            {
+                return await _budgetContext.Families
+                                .OrderBy(familyParams.OrderMode)
+                                .Skip((familyParams.PageNumber - 1) * familyParams.PageSize)
+                                .Take(familyParams.PageSize)
+                                .ToListAsync();
+            }
         }
 
         [HttpGet("{id}")]

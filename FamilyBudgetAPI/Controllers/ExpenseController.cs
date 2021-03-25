@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 
 namespace FamilyBudgetAPI.Controllers
@@ -33,6 +34,44 @@ namespace FamilyBudgetAPI.Controllers
                 return null;
             }
 
+        }
+
+        [HttpGet("[action]")]
+        public async Task<IEnumerable<Expense>> GetPagination([FromQuery] ExpenseFilter expense)
+        {
+            var expenseParams = new Pagination(expense.PageNumber, expense.PageSize, expense.OrderMode);
+
+            var filterResult = _budgetContext.Expenses.Any(ex => ex.Id == expense.Id
+                                                        || ex.Value == expense.Value
+                                                        || ex.Description == expense.Description
+                                                        || ex.MemberId == expense.MemberId
+                                                        || ex.ExpenseDate == expense.ExpenseDate
+                                                        || ex.DateCreated == expense.DateCreated
+                                                        || ex.DateUpdated == expense.DateUpdated);
+
+            if (filterResult)
+            {
+                return await _budgetContext.Expenses
+                                .Where(ex => ex.Id == expense.Id
+                                          || ex.Value == expense.Value
+                                          || ex.Description == expense.Description
+                                          || ex.MemberId == expense.MemberId
+                                          || ex.ExpenseDate == expense.ExpenseDate
+                                          || ex.DateCreated == expense.DateCreated
+                                          || ex.DateUpdated == expense.DateUpdated)
+                                .OrderBy(expenseParams.OrderMode)
+                                .Skip((expenseParams.PageNumber - 1) * expenseParams.PageSize)
+                                .Take(expenseParams.PageSize)
+                                .ToListAsync();
+            }
+            else
+            {
+                return await _budgetContext.Expenses
+                                .OrderBy(expenseParams.OrderMode)
+                                .Skip((expenseParams.PageNumber - 1) * expenseParams.PageSize)
+                                .Take(expenseParams.PageSize)
+                                .ToListAsync();
+            }
         }
 
         [HttpGet("{id}")]

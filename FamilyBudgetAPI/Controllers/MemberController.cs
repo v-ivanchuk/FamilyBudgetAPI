@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 
 namespace FamilyBudgetAPI.Controllers
@@ -23,6 +24,50 @@ namespace FamilyBudgetAPI.Controllers
         public async Task<IEnumerable<Member>> Get()
         {
             return await _budgetContext.Members.Include(m => m.Family).ToListAsync();
+        }
+
+        [HttpGet("[action]")]
+        public async Task<IEnumerable<Member>> GetPagination([FromQuery] MemberFilter member)
+        {
+            var memberParams = new Pagination(member.PageNumber, member.PageSize, member.OrderMode);
+
+            var filterResult = _budgetContext.Members.Any(m => m.Id == member.Id
+                                                       || m.Name == member.Name
+                                                       || m.Surname == member.Surname
+                                                       || m.Email == member.Email
+                                                       || m.PhoneNumber == member.PhoneNumber
+                                                       || m.Address == member.Address
+                                                       || m.City == member.City
+                                                       || m.FamilyId == member.FamilyId
+                                                       || m.DateCreated == member.DateCreated
+                                                       || m.DateUpdated == member.DateUpdated);
+
+            if (filterResult)
+            {
+                return await _budgetContext.Members
+                                .Where(m => m.Id == member.Id
+                                         || m.Name == member.Name
+                                         || m.Surname == member.Surname
+                                         || m.Email == member.Email
+                                         || m.PhoneNumber == member.PhoneNumber
+                                         || m.Address == member.Address
+                                         || m.City == member.City
+                                         || m.FamilyId == member.FamilyId
+                                         || m.DateCreated == member.DateCreated
+                                         || m.DateUpdated == member.DateUpdated)
+                                .OrderBy(memberParams.OrderMode)
+                                .Skip((memberParams.PageNumber - 1) * memberParams.PageSize)
+                                .Take(memberParams.PageSize)
+                                .ToListAsync();
+            }
+            else
+            {
+                return await _budgetContext.Members
+                                .OrderBy(memberParams.OrderMode)
+                                .Skip((memberParams.PageNumber - 1) * memberParams.PageSize)
+                                .Take(memberParams.PageSize)
+                                .ToListAsync();
+            }
         }
 
         [HttpGet("{id}")]
