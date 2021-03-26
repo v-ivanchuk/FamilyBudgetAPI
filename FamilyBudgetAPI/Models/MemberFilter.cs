@@ -23,5 +23,7 @@ namespace FamilyBudgetAPI.Models
         public string City { get; set; }
 
         public int FamilyId { get; set; }
+
+        public FamilyFilter Family { get; set; }
     }
 }

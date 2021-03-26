@@ -17,5 +17,7 @@ namespace FamilyBudgetAPI.Models
         public DateTime ExpenseDate { get; set; }
 
         public int MemberId { get; set; }
+
+        public MemberFilter Member { get; set; }
     }
 }

@@ -27,35 +27,19 @@ namespace FamilyBudgetAPI.Controllers
         }
 
         [HttpGet("[action]")]
-        public async Task<IEnumerable<Family>> GetPagination([FromQuery] FamilyFilter family)
+        public async Task<IEnumerable<Family>> GetPagination([FromQuery] FamilyFilter familyFilter)
         {
-            var familyParams = new Pagination(family.PageNumber, family.PageSize, family.OrderMode);
+            var familyPagination = new Pagination(familyFilter.PageNumber, familyFilter.PageSize, familyFilter.OrderMode);
 
-            var filterResult =  _budgetContext.Families.Any(f => f.Id == family.Id
-                                                         || f.Name == family.Name
-                                                         || f.DateCreated == family.DateCreated
-                                                         || f.DateUpdated == family.DateUpdated);
+            var familyQuery = _budgetContext.Families.AsQueryable();
 
-            if (filterResult)
-            {
-                return await _budgetContext.Families
-                                .Where(f => f.Id == family.Id
-                                         || f.Name == family.Name
-                                         || f.DateCreated == family.DateCreated
-                                         || f.DateUpdated == family.DateUpdated)
-                                .OrderBy(familyParams.OrderMode)
-                                .Skip((familyParams.PageNumber - 1) * familyParams.PageSize)
-                                .Take(familyParams.PageSize)
-                                .ToListAsync();
-            }
-            else
-            {
-                return await _budgetContext.Families
-                                .OrderBy(familyParams.OrderMode)
-                                .Skip((familyParams.PageNumber - 1) * familyParams.PageSize)
-                                .Take(familyParams.PageSize)
-                                .ToListAsync();
-            }
+            familyQuery = AddFiltersToQuery(familyFilter, familyQuery);
+
+            return await familyQuery
+                            .OrderBy(familyPagination.OrderMode)
+                            .Skip((familyPagination.PageNumber - 1) * familyPagination.PageSize)
+                            .Take(familyPagination.PageSize)
+                            .ToListAsync();
         }
 
         [HttpGet("{id}")]
@@ -135,6 +119,31 @@ namespace FamilyBudgetAPI.Controllers
             _budgetContext.Families.Remove(family);
             await _budgetContext.SaveChangesAsync();
             return Ok(family);
+        }
+
+        private IQueryable<Family> AddFiltersToQuery(FamilyFilter familyFilter, IQueryable<Family> query)
+        {
+            if (familyFilter.Id != 0)
+            {
+                query = query.Where(f => f.Id == familyFilter.Id);
+            }
+
+            if (!string.IsNullOrEmpty(familyFilter.Name))
+            {
+                query = query.Where(f => f.Name == familyFilter.Name);
+            }
+
+            if (familyFilter.DateCreated != default(DateTime))
+            {
+                query = query.Where(f => f.DateCreated == familyFilter.DateCreated);
+            }
+
+            if (familyFilter.DateUpdated != default(DateTime))
+            {
+                query = query.Where(f => f.DateUpdated == familyFilter.DateUpdated);
+            }
+
+            return query;
         }
     }
 }

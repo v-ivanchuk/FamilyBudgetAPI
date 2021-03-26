@@ -37,41 +37,19 @@ namespace FamilyBudgetAPI.Controllers
         }
 
         [HttpGet("[action]")]
-        public async Task<IEnumerable<Expense>> GetPagination([FromQuery] ExpenseFilter expense)
+        public async Task<IEnumerable<Expense>> GetPagination([FromQuery] ExpenseFilter expenseFilter)
         {
-            var expenseParams = new Pagination(expense.PageNumber, expense.PageSize, expense.OrderMode);
+            var expensePagination = new Pagination(expenseFilter.PageNumber, expenseFilter.PageSize, expenseFilter.OrderMode);
 
-            var filterResult = _budgetContext.Expenses.Any(ex => ex.Id == expense.Id
-                                                        || ex.Value == expense.Value
-                                                        || ex.Description == expense.Description
-                                                        || ex.MemberId == expense.MemberId
-                                                        || ex.ExpenseDate == expense.ExpenseDate
-                                                        || ex.DateCreated == expense.DateCreated
-                                                        || ex.DateUpdated == expense.DateUpdated);
+            var expenseQuery = _budgetContext.Expenses.Include(m => m.Member).AsQueryable();
 
-            if (filterResult)
-            {
-                return await _budgetContext.Expenses
-                                .Where(ex => ex.Id == expense.Id
-                                          || ex.Value == expense.Value
-                                          || ex.Description == expense.Description
-                                          || ex.MemberId == expense.MemberId
-                                          || ex.ExpenseDate == expense.ExpenseDate
-                                          || ex.DateCreated == expense.DateCreated
-                                          || ex.DateUpdated == expense.DateUpdated)
-                                .OrderBy(expenseParams.OrderMode)
-                                .Skip((expenseParams.PageNumber - 1) * expenseParams.PageSize)
-                                .Take(expenseParams.PageSize)
-                                .ToListAsync();
-            }
-            else
-            {
-                return await _budgetContext.Expenses
-                                .OrderBy(expenseParams.OrderMode)
-                                .Skip((expenseParams.PageNumber - 1) * expenseParams.PageSize)
-                                .Take(expenseParams.PageSize)
-                                .ToListAsync();
-            }
+            expenseQuery = AddFiltersToQuery(expenseFilter, expenseQuery);
+
+            return await expenseQuery
+                            .OrderBy(expensePagination.OrderMode)
+                            .Skip((expensePagination.PageNumber - 1) * expensePagination.PageSize)
+                            .Take(expensePagination.PageSize)
+                            .ToListAsync();
         }
 
         [HttpGet("{id}")]
@@ -149,6 +127,94 @@ namespace FamilyBudgetAPI.Controllers
             _budgetContext.Expenses.Remove(expense);
             await _budgetContext.SaveChangesAsync();
             return Ok(expense);
+        }
+
+        private IQueryable<Expense> AddFiltersToQuery(ExpenseFilter expenseFilter, IQueryable<Expense> query)
+        {
+            if (expenseFilter.Id != 0)
+            {
+                query = query.Where(ex => ex.Id == expenseFilter.Id);
+            }
+
+            if (!string.IsNullOrEmpty(expenseFilter.Description))
+            {
+                query = query.Where(ex => ex.Description == expenseFilter.Description);
+            }
+
+            if (expenseFilter?.Value != 0m)
+            {
+                query = query.Where(ex => ex.Value == expenseFilter.Value);
+            }
+
+            if (expenseFilter.MemberId != 0)
+            {
+                query = query.Where(ex => ex.MemberId == expenseFilter.MemberId);
+            }
+
+            if (expenseFilter.ExpenseDate != default(DateTime))
+            {
+                query = query.Where(ex => ex.ExpenseDate == expenseFilter.ExpenseDate);
+            }
+
+            if (expenseFilter.DateCreated != default(DateTime))
+            {
+                query = query.Where(ex => ex.DateCreated == expenseFilter.DateCreated);
+            }
+
+            if (expenseFilter.DateUpdated != default(DateTime))
+            {
+                query = query.Where(ex => ex.DateUpdated == expenseFilter.DateUpdated);
+            }
+
+            if(expenseFilter.Member != null)
+            {
+                if (expenseFilter.Member.Id != 0)
+                {
+                    query = query.Where(ex => ex.Member.Id == expenseFilter.Member.Id);
+                }
+
+                if (!string.IsNullOrEmpty(expenseFilter.Member.Name))
+                {
+                    query = query.Where(ex => ex.Member.Name == expenseFilter.Member.Name);
+                }
+
+                if (!string.IsNullOrEmpty(expenseFilter.Member.Surname))
+                {
+                    query = query.Where(ex => ex.Member.Surname == expenseFilter.Member.Surname);
+                }
+
+                if (!string.IsNullOrEmpty(expenseFilter.Member.Email))
+                {
+                    query = query.Where(ex => ex.Member.Email == expenseFilter.Member.Email);
+                }
+
+                if (!string.IsNullOrEmpty(expenseFilter.Member.PhoneNumber))
+                {
+                    query = query.Where(ex => ex.Member.PhoneNumber == expenseFilter.Member.PhoneNumber);
+                }
+
+                if (!string.IsNullOrEmpty(expenseFilter.Member.Address))
+                {
+                    query = query.Where(ex => ex.Member.Address == expenseFilter.Member.Address);
+                }
+
+                if (!string.IsNullOrEmpty(expenseFilter.Member.City))
+                {
+                    query = query.Where(ex => ex.Member.City == expenseFilter.Member.City);
+                }
+
+                if (expenseFilter.Member.DateCreated != default(DateTime))
+                {
+                    query = query.Where(ex => ex.Member.DateCreated == expenseFilter.Member.DateCreated);
+                }
+
+                if (expenseFilter.Member.DateUpdated != default(DateTime))
+                {
+                    query = query.Where(ex => ex.Member.DateUpdated == expenseFilter.Member.DateUpdated);
+                }
+            }
+
+            return query;
         }
     }
 }
