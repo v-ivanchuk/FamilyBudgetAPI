@@ -21,7 +21,7 @@ namespace FamilyBudgetAPI
             string connection = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<BudgetContext>(options =>
                 options.UseSqlServer(connection)
-                .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)); ;
+                .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
             services.AddControllers().AddNewtonsoftJson(options =>
     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
