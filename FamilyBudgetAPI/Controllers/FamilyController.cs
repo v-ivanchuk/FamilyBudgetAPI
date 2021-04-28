@@ -52,7 +52,7 @@ namespace FamilyBudgetAPI.Controllers
                 return NotFound();
             }
 
-            return new ObjectResult(family);
+            return family;
         }
 
         [HttpPost]
