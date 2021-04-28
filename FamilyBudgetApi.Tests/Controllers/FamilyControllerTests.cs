@@ -128,7 +128,6 @@ namespace FamilyBudgetApi.Tests.Controllers
             Assert.IsInstanceOf<NotFoundResult>(existingFamilyResponse.Result);
         }
 
-
         [Test]
         public async Task PutFamily_CallPutMethodWithValidData_ReceiveOkResult()
         {
@@ -141,6 +140,40 @@ namespace FamilyBudgetApi.Tests.Controllers
 
             // Assert
             Assert.IsInstanceOf<OkObjectResult>(familyResponse.Result);
+        }
+
+        [Test]
+        public async Task DeleteFamily_CallDeleteMethodWithInvalidId_ReceiveNotFoundResult()
+        {
+            // Act
+            var existingFamilyResponse = await familyController.Delete(100);
+
+            // Assert
+            Assert.IsInstanceOf<NotFoundResult>(existingFamilyResponse.Result);
+        }
+
+        [Test]
+        public async Task DeleteFamily_CallDeleteMethodWithValidId_ReceiveOkResult()
+        {
+            // Act
+            var familyResponse = await familyController.Delete(1);
+
+            // Assert
+            Assert.IsInstanceOf<OkObjectResult>(familyResponse.Result);
+        }
+
+        [Test]
+        public async Task DeleteFamily_CallDeleteMethodWithValidId_ReceiveFamiliesCountMinusOne()
+        {
+            // Arrange
+            var familiesCount = Families().Count;
+
+            // Act
+            await familyController.Delete(1);
+            var familyResponse = await familyController.Get();
+
+            // Assert
+            Assert.AreEqual(((List<Family>)familyResponse).Count, familiesCount - 1);
         }
 
         private List<Family> Families()
