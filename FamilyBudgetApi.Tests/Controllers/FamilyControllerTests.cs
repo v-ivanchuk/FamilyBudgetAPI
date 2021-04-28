@@ -53,6 +53,7 @@ namespace FamilyBudgetApi.Tests.Controllers
 
         [Test]
         [TestCase(1)]
+        [TestCase(3)]
         public async Task GetFamilyById_CallCorrectId_ReceiveFamily(int id)
         {
             // Arrange
@@ -76,11 +77,39 @@ namespace FamilyBudgetApi.Tests.Controllers
             Assert.IsInstanceOf<NotFoundResult>(familyResponse.Result);
         }
 
+        [Test]
+        public async Task PostFamily_CallPostMethodWithValidData_ReceiveOkResult()
+        {
+            // Arrange
+            var family = new Family { Name = "Tkach", DateCreated = DateTime.Now, DateUpdated = DateTime.Now };
+
+            // Act
+            var familyResponse = await familyController.Post(family);
+
+            // Assert
+            Assert.IsInstanceOf<OkObjectResult>(familyResponse.Result);
+        }
+
+        [Test]
+        public async Task PostFamily_CallPostMethodWithInvalidData_ReceiveBadRequestResult()
+        {
+            // Arrange
+            var existingFamily = budgetContext.Families.FirstOrDefault(f => f.Id == 1);
+
+            // Act
+            var familyWithNull = await familyController.Post(null);
+            var existingFamilyResponse = await familyController.Post(existingFamily);
+
+            // Assert
+            Assert.IsInstanceOf<BadRequestResult>(familyWithNull.Result);
+            Assert.IsInstanceOf<BadRequestResult>(existingFamilyResponse.Result);
+        }
+
         private List<Family> Families()
         {
             return new List<Family>
             {
-                 new Family
+                new Family
                 {
                     Name = "Ivanov",
                     DateCreated = DateTime.Now,
