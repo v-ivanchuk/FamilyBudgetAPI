@@ -105,6 +105,44 @@ namespace FamilyBudgetApi.Tests.Controllers
             Assert.IsInstanceOf<BadRequestResult>(existingFamilyResponse.Result);
         }
 
+        [Test]
+        public async Task PutFamily_CallPutMethodWithInvalidData_ReceiveBadRequestResult()
+        {
+            // Act
+            var familyWithNull = await familyController.Put(null);
+
+            // Assert
+            Assert.IsInstanceOf<BadRequestResult>(familyWithNull.Result);
+        }
+
+        [Test]
+        public async Task PutFamily_CallPutMethodWithInvalidData_ReceiveNotFoundResult()
+        {
+            // Arrange
+            var family = new Family { Id = 100, Name = "Tkach", DateCreated = DateTime.Now, DateUpdated = DateTime.Now };
+
+            // Act
+            var existingFamilyResponse = await familyController.Put(family);
+
+            // Assert
+            Assert.IsInstanceOf<NotFoundResult>(existingFamilyResponse.Result);
+        }
+
+
+        [Test]
+        public async Task PutFamily_CallPutMethodWithValidData_ReceiveOkResult()
+        {
+            // Arrange
+            var family = budgetContext.Families.FirstOrDefault(f => f.Id == 1);
+
+            // Act
+            family.Name = "Test";
+            var familyResponse = await familyController.Put(family);
+
+            // Assert
+            Assert.IsInstanceOf<OkObjectResult>(familyResponse.Result);
+        }
+
         private List<Family> Families()
         {
             return new List<Family>
